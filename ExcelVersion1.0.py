@@ -1,4 +1,5 @@
 # -*- encoding: utf-8 -*-
+# Version 1.0
 # import utilities as excel
 from os import getcwd, makedirs
 from os.path import basename, exists
@@ -10,11 +11,37 @@ from win32com.client import Dispatch
 import urllib2
 from HTMLParser import HTMLParser
 
-class MyHTMLParser(HTMLParser):
+class ScriptVersionHTMLParser(HTMLParser):
     def handle_data(self, data):
         if "ver" in data:
-            if data[3:] != version:
-                print "UPDATE"
+            if data[3:] != currentVersion:
+                print "New updates found."
+                print "Downloading new updates..."
+            else:
+                print "No updates found."
+        return
+
+class UpdateHTMLParser(HTMLParser):
+    def handle_data(self, data):
+        file = open("UPDATED.py", "w")
+        content = input(data)
+        file.write(content)
+        file.close()
+        print "Script updated from version {0} to version {1}.".format(currentVersion, data[3:])
+        print "New script is called 'UPDATED.py'."
+        return
+
+def checkForUpdates():
+    proxy_support = urllib2.ProxyHandler({"https": "http://iwebrolpo-1.tgn.trw.com:80"})
+    opener = urllib2.build_opener(proxy_support)
+    urllib2.install_opener(opener)
+    html1 = urllib2.urlopen("https://github.com/EshkemPaul/ExcelScript/blob/master/README.md").read()
+    html2 = urllib2.urlopen("https://raw.githubusercontent.com/EshkemPaul/ExcelScript/master/ExcelVersion1.0.py").read()
+    parser1 = ScriptVersionHTMLParser()
+    parser1.feed(html1)
+    parser2 = UpdateHTMLParser()
+    parser2.feed(html2)
+    return
 
 def createRevisionFolder():
     """
@@ -126,6 +153,7 @@ def createExcelWithRevision(excelFile, xmlFile):
 
     # doc = excel.openExcel(excelFile)
     # sheet = doc.OpenSheet(doc.GetSheetNames()[0])
+
     doc = Dispatch("Excel.Application")
     workbook = doc.Workbooks.Open(excelFile)
     worksheet = workbook.ActiveSheet
@@ -155,7 +183,8 @@ def createExcelWithRevision(excelFile, xmlFile):
 
 # ----------------------------------------------------------------------------#
 
-version = "1.0"
+currentVersion = "1.0"
+newVersion = ""
 listID = []
 listRev = []
 
@@ -163,28 +192,23 @@ print """+-------------------+
 | Add revision info |
 +-------------------+\n"""
 
-proxy_support = urllib2.ProxyHandler({"https":"http://iwebrolpo-1.tgn.trw.com:80"})
-opener = urllib2.build_opener(proxy_support)
-urllib2.install_opener(opener)
-html = urllib2.urlopen("https://github.com/EshkemPaul/ExcelScript/blob/master/README.md").read()
+print "Checking for updates..."
+checkForUpdates()
 
-parser = MyHTMLParser()
-parser.feed(html)
-
-print "Path to XML file:"
-tempXML = ""
-fileXML = checkXMLfile(tempXML)
-
-print "\nPath to Excel file with extension '*.xlsm' that you want to add revision info to:"
-tempExcel = ""
-fileExcel = checkExcelFile(tempExcel)
-
-print "\nCreating copy of Excel file in case something goes wrong..."
-timeNow = datetime.datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
-createBackupCopy(fileExcel)
-
-createExcelWithRevision(fileExcel, fileXML)
-
-print "\nDone."
-print "Copy of the original Excel file is located in the same directory as script."
-print "Excel file with revisions are located in the same directory as script."
+# print "Path to XML file:"
+# tempXML = ""
+# fileXML = checkXMLfile(tempXML)
+#
+# print "\nPath to Excel file with extension '*.xlsm' that you want to add revision info to:"
+# tempExcel = ""
+# fileExcel = checkExcelFile(tempExcel)
+#
+# print "\nCreating copy of Excel file in case something goes wrong..."
+# timeNow = datetime.datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
+# createBackupCopy(fileExcel)
+#
+# createExcelWithRevision(fileExcel, fileXML)
+#
+# print "\nDone."
+# print "Copy of the original Excel file is located in the same directory as script."
+# print "Excel file with revisions are located in the same directory as script."
